@@ -89,6 +89,10 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Getopt::Long;
+
+# Require perl-json module
+# Arch Linux user can simply run:
+#     sudo pacman -S perl-json
 use JSON;
 
 # get the remote path for packages
