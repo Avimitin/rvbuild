@@ -88,7 +88,6 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Getopt::Long;
-use Time::Piece;
 
 # Require perl-json module
 # Arch Linux user can simply run:
@@ -168,10 +167,9 @@ sub save_server_cache {
   print("==> Saving server info......");
   open (my $server_cache, '>', '.ctx.json') or die 'fail to create .ctx.json file';
   my $server = shift;
-  my $now = localtime->epoch;
   my %context = (
     'server' => $server,
-    'ttimestamp' => trim_str($now),
+    'ttimestamp' => time,
   );
   my $content = encode_json(\%context);
   print $server_cache "$content\n";
