@@ -166,17 +166,16 @@ sub select_host {
 
 sub save_server_cache {
   print("==> Saving server info......");
-  open (SERVER_LOAD_CACHE, '>', '.ctx.json') or die 'fail to create .ctx.json file';
-  my $json = JSON->new->utf8;
+  open (my $server_cache, '>', '.ctx.json') or die 'fail to create .ctx.json file';
   my $server = shift;
   my $now = `date +'%Y-%m-%d-%H-%M-%S'`;
   my %context = (
     'server' => $server,
     'date' => trim_str($now),
   );
-  my $content = $json->encode(\%context);
-  print SERVER_LOAD_CACHE "$content\n";
-  close(SERVER_LOAD_CACHE);
+  my $content = encode_json(\%context);
+  print $server_cache "$content\n";
+  close($server_cache);
   print("Done\n");
 }
 
