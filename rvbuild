@@ -124,6 +124,21 @@ if ($ENV{'RVSERVERS'}) {
   @serverlist = ('luxio', 'shinx', 'magmortar', 'minun', 'chimchar');
 }
 
+# save server cache save the result to local disk
+sub save_server_cache {
+  print("==> Saving server info......");
+  open (my $server_cache, '>', '.ctx.json') or die 'fail to create .ctx.json file';
+  my $server = shift;
+  my %context = (
+    'server' => $server,
+    'ttimestamp' => time,
+  );
+  my $content = encode_json(\%context);
+  print $server_cache "$content\n";
+  close($server_cache);
+  print("Done\n");
+}
+
 # get the available server
 sub select_host {
   my $server = "";
@@ -160,24 +175,11 @@ sub select_host {
     print "Done\n";
   }
 
+  save_server_cache($server);
+
   return $server;
 }
 
-sub save_server_cache {
-  print("==> Saving server info......");
-  open (my $server_cache, '>', '.ctx.json') or die 'fail to create .ctx.json file';
-  my $server = shift;
-  my %context = (
-    'server' => $server,
-    'ttimestamp' => time,
-  );
-  my $content = encode_json(\%context);
-  print $server_cache "$content\n";
-  close($server_cache);
-  print("Done\n");
-}
-
 my $server = select_host() or die 'fail to select host server';
-save_server_cache($server);
 print "\n";
 
