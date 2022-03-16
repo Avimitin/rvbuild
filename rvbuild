@@ -269,6 +269,8 @@ my $server = "";
 
 # parse command line
 GetOptions(
+  # FIXME: it should be `rvbuild <pkgname>` not `rvbuild -p <pkgname>`.
+  # Current design is bad.
   "package|p=s" => \$pkgname,
   "test|t" => \$test_mode,
   "server|s=s" => \$server,
