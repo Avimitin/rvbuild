@@ -231,5 +231,5 @@ sub select_host {
 }
 
 my $server = select_host() or die 'fail to select host server';
-print "Selected server: $server\n";
+print "=> Using server: $server\n";
 
