@@ -174,6 +174,14 @@ sub run_ssh_test {
   return $server;
 }
 
+# Read from `.ctx.json` file. Return empty string if the script fail
+# to read the file for some reason.
+sub read_context {
+  open(my $ctx_fd, '<:encoding(UTF-8)', '.ctx.json') or return "";
+  local $/;
+  return <$ctx_fd>;
+}
+
 # Return the the appropriate server for the jobs.
 # There are 3 ways to defined the target server.
 #
@@ -205,12 +213,16 @@ sub select_host {
   };
 
   # get buffer
-  # TODO: if there is a local buffer indicate the server name
-  # if (open(my $ctx_fd, '<', '.ctx.json')) {
-  #   my $json = JSON->new->utf8;
-  #   my $content = <$ctx_fd>;
-  #   my %server = $json->decode_json($content);
-  # };
+  my $ctx = read_context();
+  # if the file exist
+  if ($ctx ne "") {
+    my $ctx_json = decode_json($ctx);
+    my $duration = time - $ctx_json->{'ttimestamp'};
+    # and the duration is under 30 minutes
+    if ($duration < 1800) {
+      return $ctx_json->{'server'};
+    }
+  }
 
   # test server
   $server = run_ssh_test();
@@ -219,5 +231,5 @@ sub select_host {
 }
 
 my $server = select_host() or die 'fail to select host server';
-print "\n";
+print "Selected server: $server\n";
 
