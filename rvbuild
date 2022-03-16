@@ -269,17 +269,19 @@ my $server = "";
 
 # parse command line
 GetOptions(
-  # FIXME: it should be `rvbuild <pkgname>` not `rvbuild -p <pkgname>`.
-  # Current design is bad.
-  "package|p=s" => \$pkgname,
   "test|t" => \$test_mode,
   "server|s=s" => \$server,
 );
 
 # If no pkgname is given, and it is not in test mode,
 # the script just exit with error code.
-if ($pkgname eq "" && !$test_mode) {
-  die "No package name given, exit...";
+if ((scalar @ARGV) == 0 && !$test_mode) {
+  print "No package name given, exit...\n";
+  exit 1;
+} else {
+  # FIXME: user may want to pass list of pacakge to build, the script is
+  # responsible to handle this and use different user to build those pkg.
+  $pkgname = join('', @ARGV);
 }
 
 # If no server is given by option --server, the script we try
@@ -289,5 +291,6 @@ if ($server eq "") {
 }
 
 print "=> Using server: $server\n";
+print "=> Preparing to build package: $pkgname\n";
 print "=> Checking directories...\n";
 #check_workspace();
