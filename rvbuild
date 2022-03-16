@@ -96,12 +96,6 @@ use Getopt::Long;
 #     sudo pacman -S perl-json
 use JSON;
 
-# Get the remote path for packages
-my $rvpkgpath = $ENV{'RVPKGPATH'} // "$ENV{'HOME'}/riscv/packages";
-
-# Get the remote cache path for packages
-my $rvpkgcache = $ENV{'RVPKGCACHE'} // "$ENV{'HOME'}/.cache/rvpkgcache";
-
 # Trim the trailing white space or \n
 sub trim_str {
   my $str = shift;
@@ -256,6 +250,10 @@ sub select_host {
 # sub check_workspace {
 #   my $server = shift;
 #   my $pkgname = shift;
+# Get the remote path for packages
+#   my $rvpkgpath = $ENV{'RVPKGPATH'} // "$ENV{'HOME'}/riscv/packages";
+# Get the remote cache path for packages
+#   my $rvpkgcache = $ENV{'RVPKGCACHE'} // "$ENV{'HOME'}/.cache/rvpkgcache";
 #   system("$ssh_exec $server mkdir -p $rvpkgpath")
 #     or die "Fail to create dir <$rvpkgpath> on server <$server>";
 #   system("$ssh_exec $server mkdir -p $rvpkgcache")
