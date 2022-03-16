@@ -233,14 +233,7 @@ sub read_context {
 #   the script will try to run command `uptime | awk '{ print $12 }'`
 #   to get the load from each server.
 sub select_host {
-  # get server from 3 ways
   my $server = "";
-
-  # get argument
-  GetOptions('server|s=s' => \$server);
-  if ($server) {
-    return $server;
-  };
 
   # get buffer
   my $ctx = read_context();
@@ -260,6 +253,39 @@ sub select_host {
   return $server;
 }
 
-my $server = select_host() or die 'fail to select host server';
-print "=> Using server: $server\n";
+# sub check_workspace {
+#   my $server = shift;
+#   my $pkgname = shift;
+#   system("$ssh_exec $server mkdir -p $rvpkgpath")
+#     or die "Fail to create dir <$rvpkgpath> on server <$server>";
+#   system("$ssh_exec $server mkdir -p $rvpkgcache")
+#     or die "Fail to create dir <$rvpkgcache> on server <$server>";
+# }
 
+# setup the script
+my $pkgname = "";
+my $test_mode;
+my $server = "";
+
+# parse command line
+GetOptions(
+  "package|p=s" => \$pkgname,
+  "test|t" => \$test_mode,
+  "server|s=s" => \$server,
+);
+
+# If no pkgname is given, and it is not in test mode,
+# the script just exit with error code.
+if ($pkgname eq "" && !$test_mode) {
+  die "No package name given, exit...";
+}
+
+# If no server is given by option --server, the script we try
+# to get it itself.
+if ($server eq "") {
+  $server = select_host() or die 'fail to select host server';
+}
+
+print "=> Using server: $server\n";
+print "=> Checking directories...\n";
+#check_workspace();
