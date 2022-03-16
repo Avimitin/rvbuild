@@ -109,6 +109,36 @@ sub trim_str {
   return $str;
 }
 
+# TODO: use span to describe a range of event
+# Example:
+#   my $logger = span->new("some log");
+#   $logger->info("new event");
+#
+#   output:
+#     => some log
+#     ===> new event
+#
+#   my $logger = span->new("new span");
+#   $logger->info("new event")
+#   my $child = $logger->new("child span");
+#   $child->error("child event")
+#
+#   $logger = span->new("another span");
+#
+#   output:
+#     => new span
+#     ===> new event
+#     ===> child span
+#     ======> child event
+#     => another span
+#
+# my $ansi_green = "\e[0;32m";
+# my $ansi_bold_red = "\e[1;31m";
+# my $ansi_norm = "\e[0m";
+# sub info {
+#   print("$ansi_green=>$ansi_norm $_")
+# }
+
 # Test the ssh executable and get the exact path of the executable
 my $ssh_exec = trim_str(`sh -c 'command -v ssh 2>&1'`);
 if ($?) {
