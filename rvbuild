@@ -86,6 +86,8 @@ When you run command `rvbuild done`, the script will clean up the local director
 
 use strict;
 use warnings;
+
+# FIXME: this is for debugging, should be remove after script is stable.
 use Data::Dumper;
 use Getopt::Long;
 
@@ -94,37 +96,26 @@ use Getopt::Long;
 #     sudo pacman -S perl-json
 use JSON;
 
-# get the remote path for packages
+# Get the remote path for packages
 my $rvpkgpath = $ENV{'RVPKGPATH'} // "$ENV{'HOME'}/riscv/packages";
 
-# get the remote cache path for packages
+# Get the remote cache path for packages
 my $rvpkgcache = $ENV{'RVPKGCACHE'} // "$ENV{'HOME'}/.cache/rvpkgcache";
 
-# trim the trailing white space or \n
+# Trim the trailing white space or \n
 sub trim_str {
   my $str = shift;
   $str =~ s/^\s+|\s+$//g;
   return $str;
 }
 
-# test the ssh executable and get the exact path of the executable
-my $ssh_exec = `sh -c 'command -v ssh 2>&1'`;
+# Test the ssh executable and get the exact path of the executable
+my $ssh_exec = trim_str(`sh -c 'command -v ssh 2>&1'`);
 if ($?) {
   die "No ssh executable found on this machine\n";
 }
 
-$ssh_exec = trim_str($ssh_exec);
-
-# find servers
-my @serverlist;
-if ($ENV{'RVSERVERS'}) {
-  # try to parse string like "server1,server2,server3"
-  @serverlist = split(',', $ENV{RVSERVERS});
-} else {
-  @serverlist = ('luxio', 'shinx', 'magmortar', 'minun', 'chimchar');
-}
-
-# save server cache save the result to local disk
+# Save server cache save the result to local disk.
 sub save_server_cache {
   print("==> Saving server info......");
   open (my $server_cache, '>', '.ctx.json') or die 'fail to create .ctx.json file';
@@ -139,34 +130,39 @@ sub save_server_cache {
   print("Done\n");
 }
 
-# get the available server
-sub select_host {
-  my $server = "";
-  # get options by pattern --server or -s
-  GetOptions('server|s=s' => \$server);
+# Iterate a list of servers and get the server with lowest load.
+# User can define available server by environment variable `$RVSERVERS`.
+# User should use comma `,` to split the servers name.
+#
+# Example:
+#   $ export $RVSERVERS "luxio,shinx,magmortar"
+#
+# Notice:
+#   Please double check your environment variable is trailing with `S`.
+#   It is `$RVSERVERS`, not `$RVSERVER`.
+sub run_ssh_test {
+  # find servers
+  my @serverlist;
 
-  # if user specify the server name, just use it
-  if ($server) {
-    return $server;
-  };
-
-  # TODO: if there is a local buffer indicate the server name
-  # if (open(my $ctx_fd, '<', '.ctx.json')) {
-  #   my $json = JSON->new->utf8;
-  #   my $content = <$ctx_fd>;
-  #   my %server = $json->decode_json($content);
-  # };
+  # Get option from env
+  if ($ENV{'RVSERVERS'}) {
+    @serverlist = split(',', $ENV{RVSERVERS});
+  } else {
+    @serverlist = ('luxio', 'shinx', 'magmortar', 'minun', 'chimchar');
+  }
 
   print "=> Testing servers...\n";
   # else we try to find the server with lowest load
   my $min = 0.00;
-  QUERY:
+  my $server = "";
+
   foreach my $pending (@serverlist) {
     print "====> Task: test $pending......";
 
     # use the 15min load
     my $cmd = "$ssh_exec $pending uptime | awk '{print \$12}'";
     my $current_load = `$cmd` or die "Fail to run command $cmd";
+
     if ($min == 0.00 || $current_load < $min) {
       $min = $current_load;
       $server = $pending;
@@ -175,8 +171,50 @@ sub select_host {
     print "Done\n";
   }
 
-  save_server_cache($server);
+  return $server;
+}
 
+# Return the the appropriate server for the jobs.
+# There are 3 ways to defined the target server.
+#
+# # The strategies:
+#
+# 1. get server by argument --server or -s
+#   User can specify the target server by arguments --server or -s.
+#   For example: rvbuild --server shinx, then all the jobs will be run
+#   on shinx server only.
+#
+# 2. get server from cache
+#   After running the machine load test, the script will buffer the
+#   result and store it into the `.ctx.json` file. If the file exist
+#   and the duration between last buffered time and current time is
+#   under 30 minutes, the script will use that buffered server.
+#
+# 3. get the lowest load server from list of servers
+#   If there is no argument, no cache file or the cache is outdated,
+#   the script will try to run command `uptime | awk '{ print $12 }'`
+#   to get the load from each server.
+sub select_host {
+  # get server from 3 ways
+  my $server = "";
+
+  # get argument
+  GetOptions('server|s=s' => \$server);
+  if ($server) {
+    return $server;
+  };
+
+  # get buffer
+  # TODO: if there is a local buffer indicate the server name
+  # if (open(my $ctx_fd, '<', '.ctx.json')) {
+  #   my $json = JSON->new->utf8;
+  #   my $content = <$ctx_fd>;
+  #   my %server = $json->decode_json($content);
+  # };
+
+  # test server
+  $server = run_ssh_test();
+  save_server_cache($server);
   return $server;
 }
 
