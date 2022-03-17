@@ -139,6 +139,12 @@ if ($?) {
   die "No ssh executable found on this machine\n";
 }
 
+# We need rsync to download and upload files
+my $rsync = trim_str(`sh -c 'command -v rsync 2>&1'`);
+if ($?) {
+  die "No rsync found on this server\n";
+}
+
 # Save server cache save the result to local disk.
 sub save_server_cache {
   print("==> Saving server info......");
@@ -256,7 +262,7 @@ sub prepare_and_build {
   # FIXME: is it better to use script template instead of execute script one by one?
 
   # Get the remote path for packages
-  my $rvpkgpath = $ENV{'RVPKGPATH'} // "\$HOME/riscv/packages";
+  my $rvpkgpath = $ENV{'RVPKGPATH'} // "~/riscv/packages";
   print("==> Package will be checkout into $rvpkgpath\n");
   system("$prefix 'mkdir -p $rvpkgpath'") == 0
     or die "Fail to create dir <$rvpkgpath> on server <$server>";
@@ -283,8 +289,18 @@ sub prepare_and_build {
 
   print("==> Starting build\n");
   my $rvbuild_cmd = "extra-riscv64-build -- -d \"$rvpkgcache:/var/cache/pacman/pkg/\"";
+  my $build_fail = 0;
   system("$prefix 'cd $rvpkgpath/$pkgname/trunk && $rvbuild_cmd'") == 0
-    or print "==> Fail to build $pkgname, start downloading files...\n";
+    or $build_fail = 1;
+
+  if ($build_fail == 0) {
+    print "==> Build process for $pkgname is success\n";
+    return;
+  }
+
+  print "==> Fail to build $pkgname, start downloading files...\n";
+  system("$rsync -azvhP $server:$rvpkgpath/$pkgname/trunk/PKGBUILD .") == 0
+    or die "Fail to fetch PKGBUILD from target server";
 }
 
 # setup the script
