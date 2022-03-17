@@ -247,18 +247,45 @@ sub select_host {
   return $server;
 }
 
-# sub check_workspace {
-#   my $server = shift;
-#   my $pkgname = shift;
-# Get the remote path for packages
-#   my $rvpkgpath = $ENV{'RVPKGPATH'} // "$ENV{'HOME'}/riscv/packages";
-# Get the remote cache path for packages
-#   my $rvpkgcache = $ENV{'RVPKGCACHE'} // "$ENV{'HOME'}/.cache/rvpkgcache";
-#   system("$ssh_exec $server mkdir -p $rvpkgpath")
-#     or die "Fail to create dir <$rvpkgpath> on server <$server>";
-#   system("$ssh_exec $server mkdir -p $rvpkgcache")
-#     or die "Fail to create dir <$rvpkgcache> on server <$server>";
-# }
+sub prepare_and_build {
+  my $server = shift;
+  my $pkgname = shift;
+
+  my $prefix = "$ssh_exec $server";
+
+  # FIXME: is it better to use script template instead of execute script one by one?
+
+  # Get the remote path for packages
+  my $rvpkgpath = $ENV{'RVPKGPATH'} // "\$HOME/riscv/packages";
+  print("==> Package will be checkout into $rvpkgpath\n");
+  system("$prefix 'mkdir -p $rvpkgpath'") == 0
+    or die "Fail to create dir <$rvpkgpath> on server <$server>";
+
+  # Get the remote cache path for packages
+  my $rvpkgcache = $ENV{'RVPKGCACHE'} // "\$HOME/.cache/rvpkgcache";
+  print("==> Build cache will be saved into $rvpkgcache\n");
+  system("$prefix 'mkdir -p $rvpkgcache'") == 0
+    or die "Fail to create dir <$rvpkgcache> on server <$server>";
+
+  print("==> Running asp update\n");
+  system("$prefix 'asp update'") == 0
+    or die "fail to execute asp update, is the asp exist on <$server>?";
+
+  # TODO: Do not fetch PKGBUILD when the path is exist.
+
+  print("==> Checking out package: $pkgname to $rvpkgpath\n");
+  system("$prefix 'cd $rvpkgpath && asp checkout $pkgname'") == 0
+    or die "fail to get $pkgname 's PKGBUILD file";
+
+  print("==> Setting PKGBUILD architecture to \"riscv64\"\n");
+  system("$prefix 'cd $rvpkgpath/$pkgname/trunk && setconf PKGBUILD arch \\(\"riscv64\"\\)'") == 0
+    or die "fail to set arch for $pkgname";
+
+  print("==> Starting build\n");
+  my $rvbuild_cmd = "extra-riscv64-build -- -d \"$rvpkgcache:/var/cache/pacman/pkg/\"";
+  system("$prefix 'cd $rvpkgpath/$pkgname/trunk && $rvbuild_cmd'") == 0
+    or print "==> Fail to build $pkgname, start downloading files...\n";
+}
 
 # setup the script
 my $pkgname = "";
@@ -290,5 +317,4 @@ if ($server eq "") {
 
 print "=> Using server: $server\n";
 print "=> Preparing to build package: $pkgname\n";
-print "=> Checking directories...\n";
-#check_workspace();
+prepare_and_build($server, $pkgname) if (!$test_mode);
