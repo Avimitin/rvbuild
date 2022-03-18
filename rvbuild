@@ -313,11 +313,13 @@ sub build {
 my $pkgname = "";
 my $test_mode;
 my $server = "";
+my $rebuild_mode;
 
 # parse command line
 GetOptions(
   "test|t" => \$test_mode,
   "server|s=s" => \$server,
+  "rebuild|r" => \$rebuild_mode,
 );
 
 # Test mode only test load on servers
@@ -346,4 +348,6 @@ if ($server eq "") {
 print "=> Using server: $server\n";
 print "=> Preparing to build package: $pkgname\n";
 prepare($server);
-build($server, $pkgname);
+
+print "=> Start building package: $pkgname\n";
+build($server, $pkgname) if (!$rebuild_mode);
