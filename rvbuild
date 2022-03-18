@@ -204,6 +204,15 @@ sub prepare {
     return;
   }
 
+  # If we are rebuilding stuff, send the local PKGBUILD to remote if it
+  # exist.
+  if ($rebuild_mode) {
+    if (-f "PKGBUILD") {
+      system($rsync -azhP PKGBUILD "$server:$rvpkgpath/$pkgname/trunk/") == 0
+        or die "Fail to send local PKGBUILD back to server";
+    }
+  }
+
   # Get the remote path for packages
   print("==> Package will be checkout into $rvpkgpath\n");
   system("$prefix 'mkdir -p $rvpkgpath'") == 0
