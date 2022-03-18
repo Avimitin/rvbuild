@@ -169,6 +169,10 @@ sub read_context {
 sub select_host {
   my $server = "";
 
+  if ($dry_run_mode) {
+    return "Monk Server";
+  }
+
   # get buffer
   my $ctx = read_context();
   # if the file exist
@@ -192,6 +196,14 @@ sub prepare {
   my $server = shift;
 
   my $prefix = "$ssh_exec $server";
+
+  if ($dry_run_mode) {
+    print("=> PKGBUILD file path: $rvpkgpath\n");
+    print("=> Build cache path: $rvpkgcache\n");
+    print("=> Using command: $prefix to build\n");
+    return;
+  }
+
   # Get the remote path for packages
   print("==> Package will be checkout into $rvpkgpath\n");
   system("$prefix 'mkdir -p $rvpkgpath'") == 0
@@ -212,6 +224,12 @@ sub checkout {
   my $pkgname = shift;
 
   my $prefix = "$ssh_exec $server";
+
+  if ($dry_run_mode) {
+    print("=> Using command: $prefix to build\n");
+    print("=> asp checkout $pkgname\n");
+    return;
+  }
 
   # FIXME: fish will not accpet `()` since fish use it to execute command. So it is better to
   # use `sh -c` here to avoid some fish "features" mess up our workspace.
@@ -236,6 +254,12 @@ sub build {
 
   print("==> Starting build\n");
   my $rvbuild_cmd = "extra-riscv64-build -- -d \"$rvpkgcache:/var/cache/pacman/pkg/\"";
+
+  if ($dry_run_mode) {
+    print("=> Using command: $rvbuild_cmd to build\n");
+    return;
+  }
+
   my $build_fail = 0;
   system("$prefix 'cd $rvpkgpath/$pkgname/trunk && $rvbuild_cmd'") == 0
     or $build_fail = 1;
@@ -283,4 +307,4 @@ print "=> Fetching PKGBUILD for $pkgname\n";
 checkout($server, $pkgname) if (!$rebuild_mode);
 
 print "=> Start building $pkgname\n";
-build($server, $pkgname) if (!$dry_run_mode);
+build($server, $pkgname);
