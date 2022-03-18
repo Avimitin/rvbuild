@@ -244,6 +244,12 @@ sub checkout {
   # FIXME: fish will not accpet `()` since fish use it to execute command. So it is better to
   # use `sh -c` here to avoid some fish "features" mess up our workspace.
   print("==> Checking out package: $pkgname to $rvpkgpath\n");
+
+  # asp checkout will only be run when the path is not exist on target machine
+  if (system("$prefix 'test -d $rvpkgpath/$pkgname'") == 0) {
+    return;
+  }
+
   system("$prefix 'cd $rvpkgpath && asp checkout $pkgname'") == 0
     or die "fail to get $pkgname 's PKGBUILD file";
 
