@@ -207,6 +207,7 @@ sub prepare {
   # If we are rebuilding stuff, send the local PKGBUILD to remote if it
   # exist.
   if ($rebuild_mode) {
+    # the -f test if the file exist and is a plain text file
     if (-f "PKGBUILD") {
       system($rsync -azhP PKGBUILD "$server:$rvpkgpath/$pkgname/trunk/") == 0
         or die "Fail to send local PKGBUILD back to server";
@@ -278,9 +279,18 @@ sub build {
     return;
   }
 
-  # TODO: user may have local modification, ask user if they want to cover the local
-  # modification then download.
   print "==> Fail to build $pkgname, start downloading files...\n";
+
+  # the -f test if the file exist and is a plain text file
+  if (-f "PKGBUILD") {
+    print "There is a PKGBUILD already exist in the local, do you want to cover it? [y/N]";
+    my $confirm = <STDIN>;
+    chomp $confirm;
+    if ($confirm ne "y") {
+      print "==> Nothing to do\n";
+      return;
+    }
+  }
   system("$rsync -azvhP $server:$rvpkgpath/$pkgname/trunk/PKGBUILD .") == 0
     or die "Fail to fetch PKGBUILD from target server";
 }
