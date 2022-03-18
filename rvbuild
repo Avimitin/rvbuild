@@ -253,14 +253,11 @@ sub select_host {
   return $server;
 }
 
-sub prepare_and_build {
+# Mkdir the path for PKGBUILD and cache, then run the asp update command
+sub prepare {
   my $server = shift;
-  my $pkgname = shift;
 
   my $prefix = "$ssh_exec $server";
-
-  # FIXME: is it better to use script template instead of execute script one by one?
-
   # Get the remote path for packages
   my $rvpkgpath = $ENV{'RVPKGPATH'} // "~/riscv/packages";
   print("==> Package will be checkout into $rvpkgpath\n");
@@ -276,6 +273,15 @@ sub prepare_and_build {
   print("==> Running asp update\n");
   system("$prefix 'asp update'") == 0
     or die "fail to execute asp update, is the asp exist on <$server>?";
+}
+
+sub build {
+  my $server = shift;
+  my $pkgname = shift;
+
+  my $prefix = "$ssh_exec $server";
+
+  # FIXME: is it better to use script template instead of execute script one by one?
 
   # TODO: Do not fetch PKGBUILD when the path is exist.
 
@@ -339,4 +345,5 @@ if ($server eq "") {
 
 print "=> Using server: $server\n";
 print "=> Preparing to build package: $pkgname\n";
-prepare_and_build($server, $pkgname);
+prepare($server);
+build($server, $pkgname);
