@@ -274,15 +274,11 @@ sub prepare {
     or die "fail to execute asp update, is the asp exist on <$server>?";
 }
 
-sub build {
+sub checkout {
   my $server = shift;
   my $pkgname = shift;
 
   my $prefix = "$ssh_exec $server";
-
-  # FIXME: is it better to use script template instead of execute script one by one?
-
-  # TODO: Do not fetch PKGBUILD when the path is exist.
 
   print("==> Checking out package: $pkgname to $rvpkgpath\n");
   system("$prefix 'cd $rvpkgpath && asp checkout $pkgname'") == 0
@@ -293,6 +289,18 @@ sub build {
   # use `sh -c` here to avoid some fish "features" mess up our workspace.
   system("$prefix 'cd $rvpkgpath/$pkgname/trunk && setconf PKGBUILD arch (\"riscv64\")'") == 0
     or die "fail to set arch for $pkgname";
+
+}
+
+sub build {
+  my $server = shift;
+  my $pkgname = shift;
+
+  my $prefix = "$ssh_exec $server";
+
+  # FIXME: is it better to use script template instead of execute script one by one?
+
+  # TODO: Do not fetch PKGBUILD when the path is exist.
 
   print("==> Starting build\n");
   my $rvbuild_cmd = "extra-riscv64-build -- -d \"$rvpkgcache:/var/cache/pacman/pkg/\"";
@@ -305,6 +313,8 @@ sub build {
     return;
   }
 
+  # TODO: user may have local modification, ask user if they want to cover the local
+  # modification then download.
   print "==> Fail to build $pkgname, start downloading files...\n";
   system("$rsync -azvhP $server:$rvpkgpath/$pkgname/trunk/PKGBUILD .") == 0
     or die "Fail to fetch PKGBUILD from target server";
@@ -350,5 +360,8 @@ print "=> Using server: $server\n";
 print "=> Preparing to build package: $pkgname\n";
 prepare($server);
 
-print "=> Start building package: $pkgname\n";
-build($server, $pkgname) if (!$rebuild_mode);
+print "=> Fetching PKGBUILD for $pkgname\n";
+checkout($server, $pkgname) if (!$rebuild_mode);
+
+print "=> Start building $pkgname\n";
+build($server, $pkgname);
