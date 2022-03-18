@@ -325,12 +325,14 @@ my $pkgname = "";
 my $test_mode;
 my $server = "";
 my $rebuild_mode;
+my $dry_run_mode;
 
 # parse command line
 GetOptions(
   "test|t" => \$test_mode,
   "server|s=s" => \$server,
   "rebuild|r" => \$rebuild_mode,
+  "dry-run" => \$dry_run_mode,
 );
 
 # Test mode only test load on servers
