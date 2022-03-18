@@ -90,3 +90,6 @@ handle it.
 
 When you run command `rvbuild done`, the script will clean up the local directory.
 
+---
+
+This script is open source under the GNU GPLv3 License.
