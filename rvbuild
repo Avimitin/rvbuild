@@ -70,9 +70,8 @@ same directory as the script with the below directory structure.
 
 =item PKGBUILD
 
-When you run the `rvbuild <pkgname>` again, the script will know that their
-is a PKGBUILD stay with it, it will send the local PKGBUILD to the remote
-server and run the build again.
+When you run the `rvbuild -r <pkgname>` (-r indicate rebuild mode), the script
+will send the local PKGBUILD to the remote server and run the build again.
 
 The script will not handle the source, it is responsible for packager to
 handle it.
@@ -290,7 +289,9 @@ sub build {
     or die "fail to get $pkgname 's PKGBUILD file";
 
   print("==> Setting PKGBUILD architecture to \"riscv64\"\n");
-  system("$prefix 'cd $rvpkgpath/$pkgname/trunk && setconf PKGBUILD arch \\(\"riscv64\"\\)'") == 0
+  # FIXME: fish will not accpet `()` since fish use it to execute command. So it is better to
+  # use `sh -c` here to avoid some fish "features" mess up our workspace.
+  system("$prefix 'cd $rvpkgpath/$pkgname/trunk && setconf PKGBUILD arch (\"riscv64\")'") == 0
     or die "fail to set arch for $pkgname";
 
   print("==> Starting build\n");
