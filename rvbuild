@@ -248,7 +248,7 @@ sub checkout {
     or die "fail to get $pkgname 's PKGBUILD file";
 
   print("==> Setting PKGBUILD architecture to \"riscv64\"\n");
-  system("$prefix 'cd $rvpkgpath/$pkgname/trunk && setconf PKGBUILD arch (\"riscv64\")'") == 0
+  system("$prefix 'cd $rvpkgpath/$pkgname/trunk && setconf PKGBUILD arch \'(\"riscv64\")\''") == 0
     or die "fail to set arch for $pkgname";
 }
 
