@@ -314,9 +314,15 @@ GetOptions(
   "server|s=s" => \$server,
 );
 
+# Test mode only test load on servers
+if ($test_mode) {
+  print "Lowest load server: ", select_host(), "\n";
+  exit 0;
+}
+
 # If no pkgname is given, and it is not in test mode,
 # the script just exit with error code.
-if ((scalar @ARGV) == 0 && !$test_mode) {
+if ((scalar @ARGV) == 0) {
   print "No package name given, exit...\n";
   exit 1;
 } else {
@@ -333,4 +339,4 @@ if ($server eq "") {
 
 print "=> Using server: $server\n";
 print "=> Preparing to build package: $pkgname\n";
-prepare_and_build($server, $pkgname) if (!$test_mode);
+prepare_and_build($server, $pkgname);
