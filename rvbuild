@@ -207,7 +207,7 @@ sub prepare {
   if ($rebuild_mode) {
     # the -f test if the file exist and is a plain text file
     if (-f "PKGBUILD") {
-      system($rsync -azhP PKGBUILD "$server:$rvpkgpath/$pkgname/trunk/") == 0
+      system("$rsync -azhP PKGBUILD $server:$rvpkgpath/$pkgname/trunk/") == 0
         or die "Fail to send local PKGBUILD back to server";
     }
   }
