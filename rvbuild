@@ -95,6 +95,21 @@ use Getopt::Long;
 #     sudo pacman -S perl-json
 use JSON;
 
+# setup the script
+my $pkgname = "";
+my $test_mode;
+my $server = "";
+my $rebuild_mode;
+my $dry_run_mode;
+
+# parse command line
+GetOptions(
+  "test|t" => \$test_mode,
+  "server|s=s" => \$server,
+  "rebuild|r" => \$rebuild_mode,
+  "dry-run" => \$dry_run_mode,
+);
+
 # Trim the trailing white space or \n
 sub trim_str {
   my $str = shift;
@@ -319,21 +334,6 @@ sub build {
   system("$rsync -azvhP $server:$rvpkgpath/$pkgname/trunk/PKGBUILD .") == 0
     or die "Fail to fetch PKGBUILD from target server";
 }
-
-# setup the script
-my $pkgname = "";
-my $test_mode;
-my $server = "";
-my $rebuild_mode;
-my $dry_run_mode;
-
-# parse command line
-GetOptions(
-  "test|t" => \$test_mode,
-  "server|s=s" => \$server,
-  "rebuild|r" => \$rebuild_mode,
-  "dry-run" => \$dry_run_mode,
-);
 
 # Test mode only test load on servers
 if ($test_mode) {
