@@ -266,8 +266,6 @@ sub build {
 
   # FIXME: is it better to use script template instead of execute script one by one?
 
-  # TODO: Do not fetch PKGBUILD when the path is exist.
-
   print("==> Starting build\n");
   my $rvbuild_cmd = "extra-riscv64-build -- -d \"$rvpkgcache:/var/cache/pacman/pkg/\"";
 
