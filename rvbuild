@@ -193,8 +193,6 @@ sub select_host {
 
 # Mkdir the path for PKGBUILD and cache, then run the asp update command
 sub prepare {
-  my $server = shift;
-
   my $prefix = "$ssh_exec $server";
 
   if ($dry_run_mode) {
@@ -230,7 +228,6 @@ sub prepare {
 }
 
 sub checkout {
-  my $server = shift;
   my $pkgname = shift;
 
   my $prefix = "$ssh_exec $server";
@@ -259,7 +256,6 @@ sub checkout {
 }
 
 sub build {
-  my $server = shift;
   my $pkgname = shift;
 
   my $prefix = "$ssh_exec $server";
@@ -324,10 +320,10 @@ if ($server eq "") {
 
 print "=> Using server: $server\n";
 print "=> Preparing to build package: $pkgname\n";
-prepare($server);
+prepare();
 
 print "=> Fetching PKGBUILD for $pkgname\n";
-checkout($server, $pkgname) if (!$rebuild_mode);
+checkout($pkgname) if (!$rebuild_mode);
 
 print "=> Start building $pkgname\n";
-build($server, $pkgname);
+build($pkgname);
