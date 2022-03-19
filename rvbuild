@@ -19,6 +19,7 @@ my $test_mode;
 my $server = "";
 my $rebuild_mode;
 my $dry_run_mode;
+my $clean_mode;
 my $rvpkgpath = $ENV{'RVPKGPATH'} // "~/riscv/packages";
 my $rvpkgcache = $ENV{'RVPKGCACHE'} // "\$HOME/.cache/rvpkgcache";
 
@@ -28,6 +29,7 @@ GetOptions(
   "server|s=s" => \$server,
   "rebuild|r" => \$rebuild_mode,
   "dry-run" => \$dry_run_mode,
+  "clean|c" => \$clean_mode,
 );
 
 # Trim the trailing white space or \n
@@ -317,6 +319,35 @@ if ((scalar @ARGV) == 0) {
 # to get it itself.
 if ($server eq "") {
   $server = select_host() or die 'fail to select host server';
+}
+
+if ($clean_mode) {
+  # if therer is a local PKGBUILD file
+  if (-f "PKGBUILD") {
+    print("=> Cleaning local PKGBUILD...");
+    system("rm PKGBUILD") == 0
+      or die "Unknown rm error";
+    print("Done\n");
+  }
+
+  # If user gives server name and package name
+  if ($server ne "" && $pkgname ne "") {
+    # clean when the pkgbuild file does exist
+    if (system("$ssh_exec $server 'test -d $rvpkgpath/$pkgname'") == 0) {
+      print("=> Cleaning remote PKGBUILD...");
+      system("$ssh_exec $server 'rm -r $rvpkgpath/$pkgname'") == 0
+        or die ("Fail to remove dir $rvpkgpath/$pkgname on server $server");
+      print("Done\n");
+    }
+
+    print("=> Untracking $pkgname...");
+    system("$ssh_exec $server 'asp untrack $pkgname > /dev/null'") == 0
+      or die ("Fail to untrack $pkgname");
+    print("Done\n");
+  }
+
+  print("All clean job done\n");
+  exit 0;
 }
 
 print "=> Using server: $server\n";
