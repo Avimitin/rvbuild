@@ -7,6 +7,7 @@ use warnings;
 # FIXME: this is for debugging, should be remove after script is stable.
 use Data::Dumper;
 use Getopt::Long;
+use Pod::Usage qw(pod2usage);
 
 # Require perl-json module
 # Arch Linux user can simply run:
@@ -20,6 +21,8 @@ my $server = "";
 my $rebuild_mode;
 my $dry_run_mode;
 my $clean_mode;
+my $man = 0;
+my $help = 0;
 my $rvpkgpath = $ENV{'RVPKGPATH'} // "~/riscv/packages";
 my $rvpkgcache = $ENV{'RVPKGCACHE'} // "\$HOME/.cache/rvpkgcache";
 
@@ -30,7 +33,11 @@ GetOptions(
   "rebuild|r" => \$rebuild_mode,
   "dry-run" => \$dry_run_mode,
   "clean|c" => \$clean_mode,
-);
+  "help|h" => \$help,
+  "man" => \$man,
+) or pod2usage(2);
+pod2usage(1) if $help;
+pod2usage(-verbose => 2) if $man;
 
 # Trim the trailing white space or \n
 sub trim_str {
@@ -359,3 +366,104 @@ checkout($pkgname) if (!$rebuild_mode);
 
 print "=> Start building $pkgname\n";
 build($pkgname);
+
+__END__
+
+=head1 NAME
+
+rvbuild - A helper script for building Arch Linux packages
+
+=head1 SYNOPSIS
+
+rvbuild [options] <pkgname>
+
+  Options:
+    --test/-t         Test the lowest server load
+    --server/-s       Specify the target machine
+    --rebuild/-r      Enter rebuild mode.
+    --clean/-c        Clean local and remote, run asp untrack
+    --help            Print this message
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<--help>
+
+Print this message and exit.
+
+=item B<--test/-t>
+
+This option will enable test mode. The test mode means this script will only
+test server average load. The script will not build package in this mode.
+
+Test result is generated from command C<uptime | awk '{print $12}'>.
+The command will return the 15mins average load. And script will iterate through
+a list of server to use this command and get the lowest load.
+You can use env variable B<$RVSERVERS> to defined the list.
+You should split the server with comma B<,> .
+
+For example:
+
+  $ export $RVSERVERS 'k5,k6,k7,shinx,luxio'
+
+The test result will be saved into a file for buffering.
+After you run the test, a file named I<.ctx.json> will be create in the same directory
+as the script.
+If the duration between now and the last test is under 30 minutes, the script will use
+the buffered server.
+
+=item B<--server/-s> <server>
+
+This options tells the script the specific server to use.
+
+=item B<--rebuild/-r>
+
+This options enable the rebuild mode, which will not perform C<asp checkout> again.
+
+The script will download the PKGBUILD file when the build is failed.
+So when in rebuild mode script will also send the local PKGBUILD back to the remote
+server to build.
+
+=item B<--clean/-c> <package>
+
+This options enable the clean mode. The script in clean mode will delete all the local
+cache file like PKGBUILD file. Then it will remove the PKGBUILD file in remote server.
+Finally it will run C<asp untrack> to untrack the package.
+
+It is recommended to combine the B<--server> options with it. It can help avoid incorrect
+behavior.
+
+=back
+
+=head1 DESCRIPTION
+
+B<rvbuild> is a script that help me accelerate the Arch Linux package build workflow.
+Most of the server I can access are far away from me.
+So it is laggy to type command in ssh.
+I want this script to help me automate some build jobs,
+so I don't need to run lot's of command in that laggy terminal.
+
+=head2 Example Usage
+
+=item * Build a package
+
+  rvbuild firefox
+
+=item * Build a package on ssh server with name "shinx"
+
+  rvbuild --server shinx firefox
+
+=item * Perform server test only
+
+  rvbuild --test
+
+=item * Rebuild a package
+
+  rvbuild --rebuild firefox
+
+=item * Clean all the file
+
+  rvbuild --clean firefox
+
+=cut
