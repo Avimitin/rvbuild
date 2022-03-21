@@ -121,7 +121,7 @@ sub run_ssh_test {
   if ($ENV{'RVSERVERS'}) {
     @serverlist = split(',', $ENV{RVSERVERS});
   } else {
-    @serverlist = ('luxio', 'shinx', 'magmortar', 'minun', 'chimchar');
+    @serverlist = ('luxio', 'shinx', 'magmortar', 'minun');
   }
 
   print "=> Testing servers...\n";
