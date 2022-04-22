@@ -23,6 +23,7 @@ my $dry_run_mode;
 my $clean_mode;
 my $man = 0;
 my $help = 0;
+my $prepare = 0;
 my $rvpkgpath = $ENV{'RVPKGPATH'} // "~/riscv/packages";
 my $rvpkgcache = $ENV{'RVPKGCACHE'} // "\$HOME/.cache/rvpkgcache";
 
@@ -35,6 +36,7 @@ GetOptions(
   "clean|c" => \$clean_mode,
   "help|h" => \$help,
   "man" => \$man,
+  "prepare" => \$prepare,
 ) or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
@@ -266,6 +268,11 @@ sub checkout {
 }
 
 sub build {
+  if ($prepare) {
+    print "==> Prepare mode enabled, exiting build...\n";
+    return;
+  }
+
   my $pkgname = shift;
 
   my $prefix = "$ssh_exec $server";
