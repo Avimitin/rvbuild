@@ -1,3 +1,4 @@
+# ARCHIVED, CONSIDER USING THE SUCCESSOR [`RAW`](https://github.com/Avimitin/riscv-archbuild-wrapper)
 # RVBUILD
 
 Usage:
